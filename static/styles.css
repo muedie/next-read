@@ -1,3 +1,20 @@
+main .form-control {
+  /* centers form-control */
+  display: inline-block;
+
+  /* No 100% width */
+  width: auto;
+}
+
 main {
+  /* allow horizontal scroll */
+  overflow-x: auto;
+
+  /* center contents */
   text-align: center;
+}
+
+main img {
+  /* make sure img is present in viewport */
+  max-width: 100%;
 }
