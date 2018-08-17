@@ -113,6 +113,9 @@ def book(isbn):
     rows = db.execute(
         "SELECT * FROM books WHERE books.isbn = :isbn", {"isbn": isbn})
 
+    if rows.rowcount < 1:
+        return render_template("book.html", book={})
+
     book = rows.fetchone()
 
     # get goodreads review data
