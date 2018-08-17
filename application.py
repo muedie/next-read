@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import login_required, get_goodreads_reviews
+from helpers import login_required, get_goodreads_reviews, pretty_date
 
 app = Flask(__name__)
 
@@ -69,8 +69,6 @@ def index():
         if len(books) < 1:
             flash("No results found!")
 
-        print("QUERY: ", query)
-
         return render_template("index.html", books=books, query=query)
 
     else:
@@ -111,74 +109,51 @@ def book(isbn):
 
                 db.commit()
 
-        # grab book info
-        rows = db.execute(
-            "SELECT * FROM books WHERE books.isbn = :isbn", {"isbn": isbn})
+    rows = db.execute(
+        "SELECT * FROM books WHERE books.isbn = :isbn", {"isbn": isbn})
 
-        book = rows.fetchone()
+    book = rows.fetchone()
 
-        # get reviews
-        rows = db.execute(
-            "SELECT reviews.*, users.username FROM reviews INNER JOIN users ON reviews.user_id = users.id WHERE book_isbn = :isbn", {"isbn": isbn})
+    # get goodreads review data
+    gr_res = get_goodreads_reviews(book[0])
 
-        reviews = rows.fetchall()
+    # get reviews
+    rows = db.execute(
+        "SELECT reviews.*, users.username FROM reviews INNER JOIN users ON reviews.user_id = users.id WHERE book_isbn = :isbn ORDER BY reviews.created_at DESC", {"isbn": isbn})
 
-        star_string = dict()
+    reviews = rows.fetchall()
 
-        for i in range(len(reviews)):
+    # formatted text for easy templating
+    f_text = dict()
 
-            rating_string = ''
+    for i in range(len(reviews)):
 
-            for j in range(5):
-                if j < reviews[i][3]:
-                    rating_string += '\u2605 '
-                else:
-                    rating_string += '\u2606 '
+        rating_string = ''
 
-            star_string[reviews[i][0]] = rating_string
+        for j in range(5):
+            if j < reviews[i][3]:
+                rating_string += '\u2605 '
+            else:
+                rating_string += '\u2606 '
 
-        return render_template("book.html", book=book, reviews=reviews, star_string=star_string)
-    else:
+        f_text[reviews[i][0]] = {
+            "star_string": rating_string,
+            "date_string": pretty_date(reviews[i][5])
+        }
 
-        # GET request: grab book info
-        rows = db.execute(
-            "SELECT * FROM books WHERE books.isbn = :isbn", {"isbn": isbn})
-
-        book = rows.fetchone()
-
-        # get reviews
-        rows = db.execute(
-            "SELECT reviews.*, users.username FROM reviews INNER JOIN users ON reviews.user_id = users.id WHERE book_isbn = :isbn", {"isbn": isbn})
-
-        reviews = rows.fetchall()
-
-        star_string = dict()
-
-        for i in range(len(reviews)):
-
-            rating_string = ''
-
-            for j in range(5):
-                if j < reviews[i][3]:
-                    rating_string += '\u2605 '
-                else:
-                    rating_string += '\u2606 '
-
-            star_string[reviews[i][0]] = rating_string
-
-        return render_template("book.html", book=book, reviews=reviews, star_string=star_string)
+    return render_template("book.html", book=book, reviews=reviews, f_text=f_text, gr_res=gr_res)
 
 
 @app.route("/api/<string:isbn>")
 def book_info(isbn):
     """ API route for info about book for given ISBN  # """
 
-    stats = get_goodreads_reviews(isbn)
+    # stats = get_goodreads_reviews(isbn)
 
-    return jsonify({
-        "isbn": isbn,
-        **stats
-    })
+    # return jsonify({
+    #     "isbn": isbn,
+    #     **stats
+    # })
 
 
 @app.route("/login", methods=["GET", "POST"])

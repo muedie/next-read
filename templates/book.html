@@ -6,10 +6,17 @@
 
 {% block main %}
 {% if book %}
-    <div class="book-info">
-        <h1>{{book[1]}}</h1>
-        <h5>by {{book[2]}}, {{book[3]}}</h5>
-        <small>ISBN: {{book[0]}}</small>
+    <div class="row">
+        <div class="col-md-9">
+            <h1>{{book[1]}}</h1>
+            <h5>by {{book[2]}}, {{book[3]}}</h5>
+            <small>ISBN: {{book[0]}}</small>
+        </div>
+        <div class="col-md-3">
+            <h1>{{gr_res["average_rating"]}}</h1>
+            <p class="mb-1">Goodreads Average Rating</p>
+            <small>{{gr_res["ratings_count"]}} ratings.</small>
+        </div>
     </div>
     <hr/>
     <div class="reviews p-4 ">
