@@ -77,6 +77,7 @@ def index():
 
 
 @app.route("/book/<string:isbn>", methods=["GET", "POST"])
+@login_required
 def book(isbn):
 
     if request.method == "POST":
