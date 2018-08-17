@@ -148,12 +148,41 @@ def book(isbn):
 def book_info(isbn):
     """ API route for info about book for given ISBN  # """
 
-    # stats = get_goodreads_reviews(isbn)
+    # api response
+    res = dict()
 
-    # return jsonify({
-    #     "isbn": isbn,
-    #     **stats
-    # })
+    # get book info
+    rows = db.execute("""
+        select * from books 
+        where isbn = :isbn
+    """, {"isbn": isbn})
+
+    if rows.rowcount < 1:
+        return jsonify({
+            "error": f"Book with ISBN: {isbn} not found"
+        })
+
+    book = rows.fetchone()
+
+    # add to response
+    res["isbn"] = book[0]
+    res["title"] = book[1]
+    res["author"] = book[2]
+    res["year"] = book[3]
+
+    # get review stats
+    rows = db.execute("""
+        select count(*), AVG(reviews.rating) from reviews 
+        where book_isbn = :isbn
+    """, {"isbn": isbn})
+
+    stats = rows.fetchone()
+
+    # add to res
+    res["review_count"] = stats[0]
+    res["average_rating"] = float(stats[1]) if stats[1] else 0
+
+    return jsonify(res)
 
 
 @app.route("/login", methods=["GET", "POST"])
