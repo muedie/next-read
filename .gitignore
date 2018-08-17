@@ -2,4 +2,6 @@ __pycache__/
 
 flask_session/
 
+venv/
+
 books.csv
